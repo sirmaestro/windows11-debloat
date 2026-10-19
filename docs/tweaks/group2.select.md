@@ -1,0 +1,155 @@
+# Group 2 pick-list: Appx / Features / AI / Edge-OneDrive-Teams
+
+Appx ids name the package Name (family name = Name + `_<publisherId>`; resolve at runtime with Get-AppxPackage -AllUsers). RV removes all "always" apps via `revitool appx --all-users --remove`; rec ✅ = RV removes it unconditionally. Items marked ⚠️/⛔ are system-critical or have dependents.
+
+## Appx Bloat Removal
+
+- [ ] **appx.deprovision-markers** — Deprovision keys (AppxAllUserStore\Deprovisioned) for ~55 packages so updates/new users don't reinstall them: stops reinstall after feature updates and for new profiles · risk: med · src: RV,RT · rec: ✅ · 🔒 🔁 · RV also deprovisions Paint, Notepad, Calculator, SecHealthUI, Photos for NEW users even though Start pins some; trim list if you keep them
+- [ ] **appx.block-outlook-devhome-autoinstall** — Blocks OOBE/Orchestrator auto-install of new Outlook and Dev Home on later updates · risk: low · src: RV · rec: ✅ · 🔁 · Needed even after removal; Windows re-queues OutlookUpdate/DevHomeUpdate workers
+- [ ] **appx.preinstalled-apps-block** — ContentDeliveryManager PreInstalled/OEM/SilentInstalledApps = 0 so Windows stops silently pushing apps · risk: low · src: RV,OD,WH · rec: ✅ · 👤 · Overlaps priv content-delivery item; dedupe in catalog
+- [ ] **appx.vclibs-restore** — Re-install Desktop/UWPDesktop VCLibs from Store after mass removals · risk: low · src: RV,RT · rec: ➕ · Safety net; RV runs always because removals can drop VCLibs. Prefer never removing frameworks instead
+- [ ] **appx.frameworks-do-not-remove** — Microsoft.VCLibs.*, Microsoft.UI.Xaml.*, Microsoft.NET.Native.*, WindowsAppRuntime.*, Microsoft.Advertising.Xaml: shared frameworks other apps depend on · risk: high · src: RV,OD · rec: ⛔ · ⛔ Guard only: tool should skip IsFramework packages; RV list includes `Microsoft.Advertising` (check it only matches Advertising.Xaml/ads app)
+- [ ] **appx.store** — Microsoft Store (Microsoft.WindowsStore) · risk: high · src: WH,OD · rec: ⛔ · ⛔ Winget/Store installs, Xbox, many apps depend on it; also needs DisableRootAutoUpdate left untouched (RV gotcha)
+- [ ] **appx.store-purchase-app** — Store Purchase App (Microsoft.StorePurchaseApp) · risk: high · src: OD · rec: ⛔ · ⛔ Needed for Store purchases/licensing
+- [ ] **appx.app-installer** — App Installer / winget (Microsoft.DesktopAppInstaller) · risk: high · src: WH,OD · rec: ⛔ · ⛔ Provides winget and MSIX install; RV also writes winget settings into its LocalState
+- [ ] **appx.windows-security-ui** — Windows Security app (Microsoft.SecHealthUI) · risk: high · src: RV,OD · rec: ⛔ · ⛔ RV only deprovisions it; do not remove even when Defender is disabled (Settings/Windows Security UI)
+- [ ] **appx.terminal** — Windows Terminal (Microsoft.WindowsTerminal, +Preview) · risk: med · src: WH,OD · rec: ⚠️ · ⚠️ Default console host on 24H2; removal leaves conhost; keep
+- [ ] **appx.calculator** — Calculator (Microsoft.WindowsCalculator) · risk: med · src: WU,WH,OD · rec: ⚠️ · ⚠️ Usually wanted; RV keeps it pinned (only deprovisions)
+- [ ] **appx.notepad** — Notepad (Microsoft.WindowsNotepad) · risk: med · src: WU,WH,OD · rec: ⚠️ · ⚠️ Usually wanted; RV keeps it. See feat.notepad-legacy-capability for the Win32 fallback
+- [ ] **appx.snipping-tool** — Snipping Tool (Microsoft.ScreenSketch) · risk: med · src: WU,WH,OD · rec: ⚠️ · ⚠️ Usually wanted; handles Win+Shift+S capture UI
+- [ ] **appx.paint** — Paint (Microsoft.Paint) · risk: low · src: WU,WH,OD,RV · rec: ➕ · RV only deprovisions it; removing leaves no mspaint unless legacy capability present
+- [ ] **appx.paint3d** — Paint 3D (Microsoft.MSPaint) · risk: low · src: RV,WH,OD · rec: ✅ · Different from Microsoft.Paint (the modern Paint); unpublished in Store
+- [x] **appx.photos** — Photos (Microsoft.Windows.Photos) · risk: med · src: RV,WU,WH,OD · rec: ✅ · ⚠️ Pair with classic Photo Viewer + file-association re-mapping (see misc); Photos is a dependency of some image associations/Widgets previews
+- [x] **appx.devhome** — Dev Home / Windows Advanced Settings (Microsoft.Windows.DevHome) · risk: low · src: RV,WU,WH,OD · rec: ✅ · 🔁 · Pair with appx.block-outlook-devhome-autoinstall
+- [x] **appx.yourphone** — Phone Link (Microsoft.YourPhone) · risk: low · src: RV,WU,WH,OD · rec: ✅ · Also hides Settings page `crossdevice`; RV gotcha: DisableWindowsConsumerFeatures breaks it (not applicable once removed)
+- [x] **appx.crossdevice** — Cross Device / Mobile Devices (MicrosoftWindows.CrossDevice) · risk: med · src: RV,WU,WH,OD · rec: ✅ · Loses phone mirroring, file transfer, hotspot handoff; also blocks Cross Device Resume (see shell)
+- [ ] **appx.camera** — Camera (Microsoft.WindowsCamera) · risk: low · src: RV,WU,WH,OD · rec: ✅ · Webcam access for other apps unaffected
+- [ ] **appx.widgets-webexperience** — Widgets board (MicrosoftWindows.Client.WebExperience) · risk: med · src: RV,OD · rec: ✅ · 🔁 · ⚠️ Since 22621.1343 Windows reinstalls it unless Dsh\AllowNewsAndInterests=0 (see start); Winhance/winutil call it "Start Experiences"
+- [ ] **appx.widgets-platform-runtime** — Widgets Platform Runtime (Microsoft.WidgetsPlatformRuntime) · risk: low · src: RV,OD · rec: ✅ · Remove together with WebExperience
+- [ ] **appx.start-experiences** — Start Experiences App (Microsoft.StartExperiencesApp) · risk: low · src: RV,WU,OD · rec: ✅ · Widgets/feeds host used by Start; RV always removes
+- [ ] **appx.secure-assessment-browser** — Secure Assessment Browser (Microsoft.Windows.SecureAssessmentBrowser) · risk: low · src: RV · rec: ✅ · ⚠️ Education exam lockdown browser; system-provisioned, safe for personal PCs
+- [ ] **appx.people-experience-host** — People Experience Host (Microsoft.Windows.PeopleExperienceHost) · risk: med · src: RV · rec: ⚠️ · ⚠️ Shell-integrated system app (taskbar people/contact flyouts); RV removes but not a normal user app
+- [ ] **appx.alarms-clock** — Clock / Alarms (Microsoft.WindowsAlarms) · risk: low · src: RV,WU,WH,OD · rec: ✅ · Also provides Focus Sessions
+- [ ] **appx.maps** — Maps (Microsoft.WindowsMaps) · risk: low · src: RV,WU,WH,OD · rec: ✅ · Unpublished in Store (cannot reinstall)
+- [ ] **appx.sticky-notes** — Sticky Notes (Microsoft.MicrosoftStickyNotes) · risk: low · src: RV,WU,WH,OD · rec: ✅ · Notes sync via MS account is lost
+- [ ] **appx.mail-calendar** — Mail and Calendar (microsoft.windowscommunicationsapps) · risk: low · src: RV,WH,OD · rec: ✅ · RV gotcha: Contacts consent left allowed for it; new Outlook may auto-install when legacy Mail is removed
+- [ ] **appx.outlook-new** — Outlook for Windows (Microsoft.OutlookForWindows, OutlookPWA) · risk: low · src: RV,WU,WH,OD · rec: ✅ · 🔁 · Pair with appx.block-outlook-devhome-autoinstall
+- [ ] **appx.people** — People (Microsoft.People) · risk: low · src: RV,WH,OD · rec: ✅ · Not reinstallable from Store
+- [ ] **appx.bing-news** — Microsoft News (Microsoft.BingNews, alias Microsoft.News) · risk: low · src: RV,WU,WH,OD · rec: ✅
+- [ ] **appx.bing-weather** — MSN Weather (Microsoft.BingWeather) · risk: low · src: RV,WU,WH,OD · rec: ✅ · Weather widget on taskbar disappears
+- [ ] **appx.bing-search** — Bing Search (Microsoft.BingSearch) · risk: low · src: RV,WU,WH,OD · rec: ✅ · Web results in Start/Search; pair with search policies (see start)
+- [ ] **appx.bing-extras** — Bing Finance/Sports/FoodAndDrink/HealthAndFitness/Travel/Translator + MicrosoftStart · risk: low · src: OD · rec: ➕ · Mostly absent on 24H2; harmless to include
+- [ ] **appx.solitaire** — Solitaire Collection (Microsoft.MicrosoftSolitaireCollection) · risk: low · src: RV,WU,WH,OD · rec: ✅
+- [ ] **appx.feedback-hub** — Feedback Hub (Microsoft.WindowsFeedbackHub) · risk: low · src: RV,WU,WH,OD · rec: ✅ · RV also hides privacy-feedback Settings page
+- [ ] **appx.get-help** — Get Help (Microsoft.GetHelp) · risk: low · src: RV,WU,WH,OD · rec: ✅ · Settings "Get help" links stop working
+- [ ] **appx.tips** — Tips / Get Started (Microsoft.Getstarted) · risk: low · src: RV,WH,OD · rec: ✅ · Not reinstallable from Store
+- [ ] **appx.todo** — Microsoft To Do (Microsoft.Todos) · risk: low · src: RV,WU,WH,OD · rec: ✅
+- [ ] **appx.power-automate** — Power Automate (Microsoft.PowerAutomateDesktop) · risk: low · src: RV,WU,WH,OD · rec: ✅
+- [ ] **appx.cortana** — Cortana (Microsoft.549981C3F5F10) · risk: low · src: RV,WH,OD · rec: ✅ · Dead app; not reinstallable
+- [ ] **appx.quick-assist** — Quick Assist Store app (MicrosoftCorporationII.QuickAssist) · risk: low · src: RV,WU,WH,OD · rec: ✅ · Loses remote-help; see feat.quick-assist-legacy-capability for the capability version
+- [ ] **appx.family-safety** — Microsoft Family (MicrosoftCorporationII.MicrosoftFamily) · risk: low · src: RV,WH,OD · rec: ✅
+- [ ] **appx.support-diagnostic-tool** — Microsoft Support Diagnostic Tool (MicrosoftCorporationII.MicrosoftSupportDiagnosticTool) · risk: low · src: OD · rec: ➕ · OD lists as caution; ReviOS leaves it
+- [ ] **appx.media-player** — Media Player (Microsoft.ZuneMusic) · risk: low · src: RV,WU,WH,OD · rec: ✅ · Removes the default audio/video player and associations; install VLC/mpv first
+- [ ] **appx.movies-tv** — Movies & TV (Microsoft.ZuneVideo) · risk: low · src: RV,WU,WH,OD · rec: ✅
+- [ ] **appx.sound-recorder** — Sound Recorder (Microsoft.WindowsSoundRecorder) · risk: low · src: RV,WU,WH,OD · rec: ✅
+- [ ] **appx.clipchamp** — Clipchamp (Clipchamp.Clipchamp) · risk: low · src: RV,WU,WH,OD · rec: ✅
+- [ ] **appx.whiteboard** — Whiteboard (Microsoft.Whiteboard) · risk: low · src: RV,OD · rec: ✅
+- [ ] **appx.surfacehub-apps** — Teams and Mail for Surface Hub (Microsoft.MicrosoftTeamsforSurfaceHub, MicrosoftCorporationII.MailforSurfaceHub) · risk: low · src: RV · rec: ✅ · Not present on most consumer images
+- [ ] **appx.powerbi** — Power BI (Microsoft.MicrosoftPowerBIForWindows) · risk: low · src: RV,OD · rec: ✅
+- [ ] **appx.skype** — Skype (Microsoft.SkypeApp) · risk: low · src: RV,WH,OD · rec: ✅ · Retired
+- [ ] **appx.office-hub** — Microsoft 365 / Office hub (Microsoft.MicrosoftOfficeHub) · risk: low · src: RV,WU,WH,OD · rec: ✅ · Hub/Copilot launcher; see ai.copilot-mic-and-genai-privacy for its mic consent
+- [ ] **appx.office-desktop-stubs** — Office Word/Excel/PowerPoint store stubs (Microsoft.Office.Word/Excel/PowerPoint) · risk: low · src: RV · rec: ✅ · Only the Store stubs; desktop Office installs unaffected
+- [ ] **appx.onenote** — OneNote for Windows (Microsoft.Office.OneNote) · risk: low · src: RV,WH,OD,WU · rec: ✅ · Winhance additionally uninstalls the desktop OneNote via its Uninstall string; skip that if you use it
+- [ ] **appx.m365-companions** — Microsoft 365 Companions (Microsoft.M365Companions) · risk: low · src: OD · rec: ➕ · Taskbar/Start people-files-calendar companions
+- [ ] **appx.spotify** — Spotify (SpotifyAB.SpotifyMusic) · risk: low · src: RV,OD · rec: ✅ · Store stub only
+- [ ] **appx.3d-viewer** — 3D Viewer (Microsoft.Microsoft3DViewer) · risk: low · src: RV,WH,OD · rec: ✅
+- [ ] **appx.mixed-reality-portal** — Mixed Reality Portal (Microsoft.MixedReality.Portal) · risk: low · src: RV,WH,OD · rec: ✅ · Deprecated in 24H2
+- [ ] **appx.third-party-promos** — OEM/sponsored third-party stubs (Disney, Amazon, Netflix, TikTok, Candy Crush, Instagram, Facebook, LinkedIn, Hulu, WinZip, Adobe Express, etc.) · risk: low · src: OD · rec: ➕ · Full name list in mech; many are Win10-era
+- [ ] **appx.legacy-win10-leftovers** — Messaging, OneConnect, Wallet, Print3D, 3DBuilder, Office.Sway, MicrosoftJournal, NetworkSpeedTest, MinecraftUWP · risk: low · src: OD,WU · rec: ➕ · Rarely present on 24H2
+- [ ] **appx.windows-aihub** — Windows.AIHub appx · risk: low · src: OD · rec: ➕ · See ai.remove-ai-platform-packages
+- [ ] **appx.xbox-identity-provider** — Xbox Identity Provider (Microsoft.XboxIdentityProvider) · risk: med · src: WU,WH,OD · rec: ⚠️ · ⚠️ Breaks MS-account sign-in in non-Xbox games/apps; XboxGipSvc also affected
+- [ ] **appx.xbox-tcui** — Xbox Live in-game UI (Microsoft.Xbox.TCUI) · risk: med · src: WU,WH,OD · rec: ⚠️ · ⚠️ Same sign-in breakage as Identity Provider
+- [ ] **appx.xbox-app** — Xbox app (Microsoft.GamingApp, Microsoft.XboxApp) · risk: low · src: WU,WH,OD · rec: ➕ · User did NOT choose Xbox removal. Game Pass/launcher gone
+- [ ] **appx.xbox-game-bar** — Xbox Game Bar (Microsoft.XboxGamingOverlay, XboxGameOverlay) · risk: med · src: WU,WH,OD · rec: ➕ · Needs ms-gamebar protocol fix or Win+G shows "get an app" popup; user did NOT choose
+- [ ] **appx.xbox-speech-overlay** — Xbox Speech To Text Overlay (Microsoft.XboxSpeechToTextOverlay) · risk: low · src: WU,OD · rec: ➕
+- [ ] **appx.xbox-gaming-services** — Gaming Services / GameCallableUI (Microsoft.GamingServices, Microsoft.XboxGameCallableUI) · risk: high · src: RT,OD · rec: ⚠️ · ⚠️ Game Pass/Store game dependency; only removed by RT's xbox-removal
+- [ ] **appx.xbox-winsxs-removal** — RT `winpackage xbox-removal` (strips Xbox stack at WinSxS level) + ms-gamebar URL protocol fix · risk: med · src: RV,RT · rec: ➕ · Not chosen by user; RV default OFF. Conflicts with the individual Xbox appx items
+- [ ] **appx.copilot-plus-names** — Winhance's abbreviated Copilot+ names: MicrosoftWindows.Voiess, .Speion, .Livtop, .InpApp, .Filons · risk: med · src: WH · rec: ⚠️ · ⚠️ Suspicious/possibly truncated; verify each with Get-AppxPackage -AllUsers before use. Not Store-reinstallable
+- [ ] **appx.codec-extensions** — HEIF/WebP/WebMedia/VP9/AV1/HEVC/MPEG2/RawImage Image/Video Extensions · risk: med · src: OD · rec: ⛔ · ⛔ Codec providers for Photos/Explorer thumbnails; OD marks Caution; do not remove
+- [ ] **appx.remote-desktop-app** — Microsoft Remote Desktop store app (Microsoft.RemoteDesktop) · risk: med · src: OD · rec: ⚠️ · ⚠️ Often absent; separate from built-in mstsc
+- [ ] **appx.oem-bloat** — OEM apps (AD2F1837.* HP, DellInc.*, Lenovo*, LGMonitorApp, etc.) · risk: med · src: OD · rec: ⚠️ · ⚠️ May include driver/control-panel hosts; review each by name
+
+## Windows Features & Capabilities
+
+- [ ] **feat.winsxs-system-components-removal** — RT `winpackage system-components-removal` CBS package (Revi's opaque list) · risk: high · src: RV,RT · rec: ⚠️ · 🔒 ♻ · RV applies always but it caused issue #49 breakages; package contents not in repo
+- [ ] **feat.update-health-tools-removal** — Uninstall Update Health Tools, PC Health Check, Windows Installation Assistant · risk: low · src: RV · rec: ✅ · 🔁 · Windows Update tends to reinstall Update Health Tools (KB platform updates)
+- [ ] **feat.powershell-v2** — Disable MicrosoftWindowsPowerShellV2 + Root optional features · risk: low · src: RV · rec: ➕ · ♻ · RV script exists but is dead code (not wired); common hardening
+- [ ] **feat.workfolders-client** — Disable WorkFolders-Client · risk: low · src: RV · rec: ➕ · ♻ · Dead code in RV
+- [ ] **feat.msrdc-infrastructure** — Disable MSRDC-Infrastructure (Remote Desktop Connection infra) · risk: med · src: RV · rec: ➕ · ♻ · Dead code in RV; check you don't need RDP app-remoting
+- [ ] **feat.printing-foundation** — Disable Printing-Foundation-Features and InternetPrinting-Client · risk: med · src: RV · rec: ⚠️ · ♻ · Removes IPP/internet printing and some network printer discovery; dead code in RV
+- [ ] **feat.directplay-legacy-components** — Enable DirectPlay and LegacyComponents for old games · risk: low · src: RV,WU · rec: ➕ · ♻ · Enable, not remove; RV script dead code, winutil offers it as "Legacy media"
+- [ ] **feat.internet-explorer-capability** — Remove Browser.InternetExplorer capability · risk: low · src: WH · rec: ➕ · Usually already absent on 24H2
+- [ ] **feat.powershell-ise-capability** — Remove PowerShell ISE capability · risk: low · src: WH · rec: ➕
+- [ ] **feat.quick-assist-legacy-capability** — Remove App.Support.QuickAssist (legacy Quick Assist) · risk: low · src: WH · rec: ➕ · Store QuickAssist is a separate item (appx.quick-assist)
+- [ ] **feat.steps-recorder-capability** — Remove App.StepsRecorder capability · risk: low · src: WH · rec: ➕
+- [ ] **feat.wmp-legacy-capability** — Remove Media.WindowsMediaPlayer capability · risk: low · src: WH · rec: ➕ · Conflicts with feat.directplay-legacy-components if you want winutil's "legacy media" set
+- [ ] **feat.wordpad-capability** — Remove Microsoft.Windows.WordPad capability · risk: low · src: WH · rec: ➕ · Already removed by default in 24H2
+- [ ] **feat.notepad-legacy-capability** — Remove Microsoft.Windows.Notepad capability (old Win32 Notepad) · risk: low · src: WH · rec: ➕ · Separate from Store Notepad; if you also remove the appx you have no Notepad
+- [ ] **feat.paint-legacy-capability** — Remove Microsoft.Windows.MSPaint capability (Win32 Paint) · risk: med · src: WH · rec: ⚠️ · ⚠️ If combined with appx.paint removal, no mspaint remains
+- [ ] **feat.openssh-client-capability** — Remove OpenSSH.Client capability · risk: med · src: WH · rec: ⚠️ · ⚠️ ssh/scp used by git and dev tools
+- [ ] **feat.openssh-server-capability** — Remove OpenSSH.Server capability · risk: low · src: WH · rec: ➕ · Normally not installed
+- [ ] **feat.wsl-disable** — Disable Microsoft-Windows-Subsystem-Linux (and VirtualMachinePlatform) · risk: low · src: WH · rec: ➕ · ♻ · Do not select if you use WSL
+- [ ] **feat.hyper-v-disable** — Disable Hyper-V, Hypervisor Platform, Hyper-V tools · risk: med · src: WH · rec: ➕ · ♻ · Breaks WSL2/Sandbox/Android emulators/VBS-related features; rarely desired together with perf VBS-off
+- [ ] **feat.windows-sandbox-disable** — Disable Containers-DisposableClientVM · risk: low · src: WH · rec: ➕ · ♻
+- [ ] **feat.netfx3-disable** — Disable .NET Framework 3.5 (NetFx3) · risk: low · src: WH · rec: ➕ · ♻ · Some legacy apps/installers need it
+- [ ] **feat.reserved-storage-off** — DISM Set-ReservedStorageState Disabled + ShippedWithReserves=0 · risk: med · src: WU · rec: ➕ · Re-enable before feature updates or they may fail
+- [ ] **feat.component-cleanup-resetbase** — DISM StartComponentCleanup /ResetBase (+ cleanmgr) · risk: med · src: WU · rec: ⚠️ · ⚠️ ResetBase is irreversible (no uninstalling updates)
+- [ ] **feat.legacy-f8-boot-menu** — bcdedit bootmenupolicy legacy · risk: low · src: WU · rec: ➕ · Enables F8 Safe Mode menu
+- [ ] **misc.hide-settings-pages** — Hide Settings pages: cortana, privacy-feedback, windowsinsider, home (+ crossdevice, aicomponents) · risk: low · src: RV,RT,OD · rec: ✅ · RV places this in its Features section; related Insider-page/WU tray hide in next item
+- [ ] **misc.hide-insider-page-wu-tray** — HideInsiderPage=1 and Windows Update tray icon hidden · risk: low · src: RV · rec: ➕
+- [ ] **misc.enable-sudo** — Enable sudo for Windows (Sudo\Enabled=3, inline) · risk: low · src: RV · rec: ➕ · 24H2+ feature
+- [ ] **misc.accessibility-reset** — Wipe Ease-of-Access hotkey/flag hives and set Flags=0 (Sticky/Filter/Toggle keys prompts off) · risk: med · src: RV · rec: ➕ · 👤 · Accessibility users should skip
+- [ ] **misc.typing-suggestions-off** — Autocorrect/spellcheck/text prediction/Input Insights off (TabletTip, Input\Settings) · risk: low · src: RV · rec: ✅ · 👤 · Also covers Winhance "Input Insights"
+- [ ] **misc.clipboard-history-off** — Clipboard history off but policy keeps it allowed · risk: low · src: RV · rec: ➕ · 👤
+- [ ] **misc.offline-maps** — Offline maps wifi-only, no auto-update · risk: low · src: RV · rec: ➕
+- [ ] **misc.inking-workspace** — Ink Workspace suggested apps off · risk: low · src: RV · rec: ➕
+
+## AI (Copilot/Recall)
+
+- [x] **ai.remove-copilot-appx** — Remove Copilot app (Microsoft.Copilot, Windows.Ai.Copilot.Provider, MicrosoftWindows.Client.CoPilot) · risk: low · src: RV,RT,WU,WH,OD · rec: ✅ · 🔁 · Store ID 9nht9rb2f4hd to reinstall; pair with ai.disable-copilot-policy
+- [x] **ai.disable-copilot-policy** — TurnOffWindowsCopilot=1 (HKLM+HKCU), hide button, block shell extension · risk: low · src: OD,WH · rec: ✅ · 👤 · Redundant after removal but blocks resurrection; Win11 24H2+ legacy policy
+- [x] **ai.disable-recall-policy** — Recall policies: DisableAIDataAnalysis, AllowRecallEnablement=0, TurnOffSavingSnapshots · risk: low · src: RV,OD,WH · rec: ✅ · 👤 · RV sets only DisableAIDataAnalysis=1; 26100.3915+ may remove the bits
+- [x] **ai.recall-feature-remove** — Disable-WindowsOptionalFeature Recall (-Remove) · risk: low · src: OD,WU · rec: ✅ · ♻ · The hard way to kill Recall
+- [ ] **ai.remove-ai-platform-packages** — Remove AIX, CoreAI, AIFabric.CBS, WindowsWorkload.*, ActionsServer, aimgr, WritingAssistant, Windows.AIHub · risk: med · src: RT,WU,WH,OD · rec: ⚠️ · 🔒 · Needs FeatureManagement Overrides so Explorer doesn't fall back to ribbon; disable WSAIFabricSvc
+- [ ] **ai.winsxs-ai-removal** — RT `winpackage ai-removal` CBS package (Revision-ReviOS-AI-Removal) · risk: high · src: RV,RT · rec: ⚠️ · 🔒 ♻ · RV default ON (remove-winsxs-ai); contents not in repo; alternative is the explicit items above
+- [ ] **ai.disable-click-to-do** — DisableClickToDo=1 (HKLM+HKCU) · risk: low · src: OD,WH · rec: ✅ · 👤 · 24H2+
+- [ ] **ai.windows-ai-agent-policies** — Disable Settings Agent, Agent Connectors/Workspaces/Remote Connectors, Copilot Runtime · risk: low · src: WH · rec: ➕ · 25H2-era WindowsAI policies
+- [ ] **ai.copilot-shell-surfaces** — Hide Copilot/Recall/companion/PWA taskbar pins, IsCopilotAvailable, Bing Chat eligibility, nudges · risk: low · src: OD,WH · rec: ➕ · 👤
+- [ ] **ai.copilot-hardware-key** — Neutralize Copilot keyboard key (SetCopilotHardwareKey="") · risk: low · src: WH · rec: ➕
+- [ ] **ai.copilot-mic-and-genai-privacy** — Deny generativeAI/systemAIModels capability access and Copilot/Office Hub mic consent · risk: low · src: WH · rec: ➕ · 👤 · Consent value + LetAppsAccess* policies
+- [ ] **ai.consumer-ai-content** — DisableConsumerAccountStateContent=1 · risk: low · src: WH · rec: ➕ · Not DisableWindowsConsumerFeatures (that breaks Phone Link per RV)
+- [ ] **ai.hide-ai-settings-pages** — Hide aicomponents and privacy-systemaimodels Settings pages · risk: low · src: OD,WU · rec: ➕
+- [ ] **ai.notepad-ai-disable** — HKLM\SOFTWARE\Policies\WindowsNotepad\DisableAIFeatures=1 · risk: low · src: WU · rec: ➕
+- [ ] **ai.paint-ai-disable** — Paint DisableImageCreator/Cocreator/GenerativeFill/GenerativeErase/RemoveBackground=1 · risk: low · src: WH · rec: ➕
+- [ ] **ai.bing-copilot-ifeo-block** — IFEO taskkill for BingChatInstaller, BGAUpsell, BCILauncher · risk: low · src: RV · rec: ✅ · 🔒 · Shared with priv IFEO item; dedupe
+- [ ] **ai.edge-ai-policies** — Edge Copilot sidebar/page context/compose/AI history/theme/DevTools AI policies · risk: low · src: WH · rec: ➕ · Moot when Edge is removed
+- [ ] **ai.office-copilot-policies** — Office connected experiences, AI training, Word/Excel/OneNote Copilot off · risk: low · src: WH · rec: ➕ · 👤 · Only matters with desktop Office
+- [ ] **ai.vivetool-recall-flag** — ViVeTool /disable /id:47205210 · risk: med · src: WU · rec: ⛔ · Needs external binary and undocumented ID; redundant with Recall removal
+
+## Edge/OneDrive/Teams
+
+- [x] **edge.remove-edge** — Remove Microsoft Edge Chromium (+legacy), uninstall via EDGE.ps1 technique, keep WebView2 · risk: high · src: RV,WU,WH · rec: ✅ · 🔁 · RV default ON; needs non-EU region for BrowserReplacement trick. Edge reinstalled by updates; pair with edge.block-edge-reinstall
+- [ ] **edge.block-edge-reinstall** — EdgeUpdate policies: InstallDefault=0, Install{Edge}=0, Install{WebView2}=1, DoNotUpdateToEdgeWithChromium=1 + Edge appx deprovision · risk: low · src: RV · rec: ✅ · 🔒 🔁 · Pairs with edge.remove-edge; WebView2 stays allowed
+- [ ] **edge.keep-webview2** — Guard: never remove msedgewebview2/EdgeWebView or EdgeUpdate ClientState · risk: low · src: RV,WH · rec: ✅ · Many apps need WebView2; backup ClientState before EdgeUpdate uninstall
+- [ ] **edge.edgeupdate-manual** — edgeupdate, edgeupdatem, MicrosoftEdgeElevationService startup = Manual (not Disabled) · risk: low · src: RV,OD · rec: ✅ · RV gotcha: Disabled breaks WebView2 install from Visual Studio
+- [ ] **edge.remove-webview2** — Uninstall WebView2 runtime / EdgeUpdate (EDGE.ps1 other modes) · risk: high · src: RV,RS · rec: ⛔ · ⛔ Unused by RV; breaks Widgets, Teams, Office, Store apps
+- [ ] **edge.protocol-redirect** — Redirect microsoft-edge: and MSEdgeHTM handlers to default browser (OpenWebSearch stub + IFEO) · risk: med · src: WH · rec: ➕ · 🔒 · Use after Edge removal so Start/Widgets links don't error
+- [ ] **edge.reremoval-task** — Scheduled task re-running Edge removal at startup and deleting *Edge* tasks · risk: med · src: WH · rec: ➕ · 🔁 · Only if updates keep bringing Edge back
+- [ ] **edge.policies-debloat** — Edge policies: no shopping/rewards/collections/wallet/recommendations, no first-run, startup boost/background off · risk: low · src: WU · rec: ➕ · Moot if Edge removed; ExtensionInstallBlocklist entry included
+- [ ] **edge.no-desktop-shortcut** — CreateDesktopShortcutDefault=0 and delete Public Edge shortcut · risk: low · src: WU · rec: ➕
+- [ ] **edge.data-optin-off** — DataCollection\MicrosoftEdgeDataOptIn=0 · risk: low · src: OD · rec: ➕
+- [x] **edge.remove-onedrive** — Uninstall OneDrive, clean AppData/Start/tasks/Run keys, hide nav pane, stop new profiles getting it · risk: med · src: RV,RT,WU,WH · rec: ✅ · 🔁 · RV default ON; user data in %USERPROFILE%\OneDrive is not deleted by Winhance
+- [ ] **edge.onedrive-block-backup-prompts** — KFMBlockOptIn=1 (HKLM+HKCU) stops known-folder backup nags · risk: low · src: WH · rec: ➕ · 👤 · Only needed if OneDrive is kept
+- [ ] **edge.onedrive-disable-sync-policy** — DisableFileSyncNGSC policy · risk: med · src: RV,WU · rec: ⛔ · ⛔ RV deliberately deletes this key ("workaround"); winutil sets it to 0 (no effect)
+- [x] **edge.remove-teams** — Remove Teams (MSTeams, MicrosoftTeams, Flipgrid) and Teams Meeting Add-in MSI · risk: low · src: RV,WU,WH,OD · rec: ✅ · Kill teams processes first to avoid long removal
+- [ ] **edge.block-teams-autoinstall** — ConfigureChatAutoInstall=0 · risk: low · src: RV · rec: ✅ · 🔁 · RV applies always, independent of Teams removal

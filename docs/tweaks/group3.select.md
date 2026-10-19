@@ -1,0 +1,174 @@
+## Services
+
+- [ ] **svc.reviOS-service-set** — ReviOS service set: dam, GpuEnergyDrv, NetBT, Telemetry, diagnosticshub.standardcollector, WerSvc, DiagTrack, wisvc, PcaSvc, WdiServiceHost/SystemHost, tcpipreg, Wecsvc, UCPD disabled; edgeupdate=Manual; condrv=Automatic · risk: med · src: RV · rec: ✅ · 🔒 · bundle of the svc.* lines below marked "in RV set"; pick bundle OR individual lines. Excludes reverted bam/Ndu/DPS/GraphicsPerfSvc/Beep
+- [ ] **svc.diagtrack** — Connected User Experiences & Telemetry (DiagTrack): set Disabled · risk: low · src: RV,WU,WH,OD · rec: ✅ · 🔒 · in RV set. WH only sets Manual; OD's bulk table re-sets it conflicting in order
+- [ ] **svc.dmwappushservice-dcpsvc** — WAP push message routing and DcpSvc telemetry data-collection service: set Disabled · risk: low · src: OD · rec: ➕ · 🔒 · OD's bulk table resets these to Manual; apply after it
+- [ ] **svc.diagnosticshub** — Diagnostics Hub standard collector service: set Disabled · risk: low · src: RV,OD · rec: ✅ · 🔒 · in RV set
+- [ ] **svc.wersvc** — Windows Error Reporting service (WerSvc; WU also wermgr): set Disabled · risk: low · src: RV,WU,WH,OD,RS · rec: ✅ · 🔒 · in RV set. Pair with task.wer-queue; WH default is Manual
+- [ ] **svc.pcasvc** — Program Compatibility Assistant service: set Disabled · risk: low · src: RV,WH,OD · rec: ✅ · 🔒 · in RV set. No more compat prompts
+- [ ] **svc.wisvc** — Windows Insider service: set Disabled · risk: low · src: RV,WH,RS · rec: ✅ · 🔒 · in RV set
+- [ ] **svc.wdi-hosts** — Diagnostic Service Host and Diagnostic System Host (WdiServiceHost, WdiSystemHost): set Disabled · risk: low · src: RV · rec: ✅ · 🔒 · in RV set. Disables troubleshooter diagnostics
+- [ ] **svc.dam** — Desktop Activity Moderator driver (dam): set Disabled · risk: med · src: RV · rec: ✅ · 🔒 ♻ · in RV set
+- [ ] **svc.gpuenergydrv** — GPU energy telemetry driver (GpuEnergyDrv): set Disabled · risk: low · src: RV · rec: ✅ · 🔒 ♻ · in RV set
+- [ ] **svc.netbt** — NetBIOS over TCP/IP driver (NetBT): set Disabled · risk: med · src: RV · rec: ✅ · 🔒 ♻ · in RV set. Breaks legacy SMB/NetBIOS name resolution
+- [ ] **svc.intel-telemetry** — Intel telemetry service ("Telemetry"): set Disabled · risk: low · src: RV · rec: ✅ · 🔒 · in RV set
+- [ ] **svc.tcpipreg-wecsvc** — tcpipreg (experimental) and Windows Event Collector (Wecsvc): set Disabled · risk: low · src: RV · rec: ✅ · 🔒 · in RV set
+- [ ] **svc.ucpd** — User Choice Protection Driver (UCPD) disabled so default-app hashes can be changed · risk: med · src: RV · rec: ✅ · 🔒 ♻ 🔁 · in RV set. Pair with task.ucpd-velocity
+- [ ] **svc.edgeupdate-manual** — Edge Update service: set Manual, not Disabled · risk: low · src: RV · rec: ✅ · 🔒 · in RV set. Disabling breaks WebView2 installs via Visual Studio
+- [ ] **svc.condrv-auto** — Console driver (condrv) set Automatic · risk: low · src: RV · rec: ✅ · 🔒 · in RV set. Fixes error 0xd000003a
+- [ ] **svc.sysmain-off** — SysMain/Superfetch (+ReadyBoost rdyboost, EnablePrefetcher) set Disabled · risk: med · src: WH,OD,RS · rec: ⛔ · 🔒 · ReviOS reverted: breaks `defrag c: -b` (boot optimize). See perf.prefetch. Winhance suggests on SSD only
+- [ ] **svc.wsearch** — Windows Search indexer (WSearch): set Manual or Disabled · risk: high · src: WH,RS · rec: ⚠️ · 🔒 · Breaks Outlook/Start/Explorer search speed. Compare perf.search-indexing-power
+- [ ] **svc.spooler** — Print Spooler: set Manual or Disabled if you have no printer · risk: high · src: WH,RS · rec: ➕ · 🔒 · Printing (incl. PDF printers) stops; PrintNightmare-style attack surface reduced
+- [ ] **svc.fax** — Fax service: set Disabled · risk: low · src: WH,OD,RS · rec: ➕ · 🔒 · Fax is an optional feature; rarely present
+- [ ] **svc.remote-registry** — Remote Registry service: set Disabled · risk: low · src: OD,RS · rec: ✅ · 🔒 · Security hardening; breaks remote regedit/admin tools
+- [ ] **svc.bluetooth** — Bluetooth Support Service (bthserv): set Manual/Disabled · risk: med · src: RS · rec: ⚠️ · 🔒 · Only on desktops without Bluetooth peripherals; OD keeps BthAvctpSvc/BthHFSrv Automatic
+- [ ] **svc.xbox-services** — Xbox Live Auth, Game Save, Networking (XblAuthManager, XblGameSave, XboxNetApiSvc): Disabled; XboxGipSvc left alone · risk: med · src: WH,OD · rec: ➕ · 🔒 · Breaks Game Pass/Store game sign-in and cloud saves; WH default Manual; OD keeps Manual
+- [ ] **svc.cdp-connected-devices** — Connected Devices Platform (CDPSvc, CDPUserSvc): set Disabled · risk: med · src: WH · rec: ➕ · 🔒 · Breaks Nearby Sharing, Phone Link, Dynamic Lock; relevant since cross-device is removed
+- [ ] **svc.geolocation-maps** — Geolocation (lfsvc) Disabled; Downloaded Maps Manager (MapsBroker) Manual · risk: low · src: WU,WH,OD · rec: ➕ · 🔒 · lfsvc: location-dependent apps stop working. See privacy group
+- [ ] **svc.winutil-set** — winutil set: CscService Disabled, SharedAccess (ICS) Disabled, StorSvc Manual, MapsBroker Manual · risk: med · src: WU · rec: ⚠️ · 🔒 · SharedAccess off breaks Mobile Hotspot/ICS; StorSvc Manual affects Storage Sense/cache
+- [ ] **svc.retail-demo** — Retail Demo service (RetailDemo): set Disabled · risk: low · src: WH,OD · rec: ➕ · 🔒
+- [ ] **svc.smartcard** — Smart card services (SCardSvr, ScDeviceEnum, SCPolicySvc): set Disabled · risk: med · src: WH · rec: ➕ · 🔒 · Breaks smart cards/YubiKey PIV and some enterprise VPN/login
+- [ ] **svc.phone-nfc-sms** — Phone, Wallet, NFC/SE Manager, SMS Router (PhoneSvc, WalletService, SEMgrSvc, SmsRouter): Disabled · risk: low · src: WH · rec: ➕ · 🔒
+- [ ] **svc.mixed-reality** — Windows Mixed Reality OpenXR service (MixedRealityOpenXRSvc): Disabled · risk: low · src: WH · rec: ➕ · 🔒 · Breaks WMR/OpenXR headsets
+- [ ] **svc.wmp-network-sharing** — WMP Network Sharing (WMPNetworkSvc): set Disabled · risk: low · src: WH,RS · rec: ➕ · 🔒
+- [ ] **svc.parental-controls** — Parental Controls service (WpcMonSvc): set Disabled · risk: low · src: WH · rec: ➕ · 🔒 · Breaks Family Safety
+- [ ] **svc.biometric** — Windows Biometric Service (WbioSrvc): set Disabled · risk: high · src: WH · rec: ⚠️ · 🔒 · Breaks Windows Hello fingerprint/face; desktops without biometric hardware only
+- [ ] **svc.sensors** — Sensor Monitoring and Sensor Data services (SensrSvc, SensorDataService): Disabled · risk: low · src: WH · rec: ➕ · 🔒 · Desktops only; breaks auto-rotate/ambient brightness
+- [ ] **svc.telephony** — Telephony service (TapiSrv): set Disabled · risk: med · src: WH · rec: ⚠️ · 🔒 · Leave Manual unless no modem/softphone/Phone Link audio
+- [ ] **svc.remote-desktop** — Remote Desktop services (TermService, SessionEnv, UmRdpService): set Disabled · risk: med · src: WH,OD · rec: ➕ · 🔒 · Breaks inbound RDP; WH recommends Manual, OD keeps Manual
+- [ ] **svc.ras-vpn** — Remote Access Connection/Auto Connection managers (RasMan, RasAuto): Disabled · risk: high · src: WH · rec: ⚠️ · 🔒 · Breaks built-in VPN and some third-party VPN clients
+- [ ] **svc.mobile-hotspot** — Windows Mobile Hotspot service (icssvc): set Disabled · risk: low · src: WH · rec: ➕ · 🔒 · Breaks Mobile Hotspot
+- [ ] **svc.tablet-input** — Touch Keyboard and Handwriting service (TabletInputService) Disabled plus IsInputAppPreloadEnabled=0 · risk: med · src: WH,RS · rec: ⚠️ · 🔒 👤 · Breaks emoji panel (Win+.), touch keyboard, pen
+- [ ] **svc.spot-verifier** — Spot Verifier (svsvc): Manual (already default) · risk: low · src: WH · rec: ➕ · 🔒 · No change on default Windows
+- [ ] **svc.legacy-disabled-od** — OD disable list: AJRouter, AppVClient, AssignedAccessManagerSvc, DialogBlockingService, HomeGroup*, NetTcpPortSharing, RemoteAccess, UevAgentService, shpamsvc, ssh-agent, tzautoupdate · risk: med · src: OD · rec: ➕ · 🔒 · ssh-agent and tzautoupdate (auto timezone) are user-visible; rest unused
+- [ ] **svc.ai-fabric** — Windows AI Fabric service (WSAIFabricSvc): set Disabled · risk: low · src: WU,WH · rec: ✅ · 🔒 · Complements AI group (Copilot/Recall removal)
+- [ ] **svc.onesyncsvc** — OneSyncSvc (mail/contacts/calendar sync) disabled · risk: low · src: WU · rec: ➕ · 🔒 · Companion to OneDrive removal; breaks Mail/Calendar sync
+- [ ] **svc.wpn-services** — Windows Push Notification user services (Wpn*): set Disabled · risk: med · src: OD(RT) · rec: ⚠️ · 🔒 · Same as the notifications "aggressive off" mode; kills all toasts
+- [ ] **svc.ctfmon-input** — Text Input Management service via ctfmon (InputServiceEnabled=0, ServiceDll swap) · risk: high · src: OD(RT) · rec: ⚠️ · 🔒 · Can break IME, touch keyboard, emoji panel
+- [ ] **svc.svchost-split** — Service host grouping: SvcHostSplitThresholdInKB tuned to merge svchost processes · risk: med · src: RV,WU,WH,OD · rec: ➕ · 🔒 ♻ · ReviOS uses revitool "recommended" mode (per-service SvcHostSplitDisable keeps XboxGipSvc working); raw RAM-sized threshold reverted
+- [ ] **svc.services-pipe-timeout** — ServicesPipeTimeout from 60 s to 30 s · risk: med · src: WH · rec: ➕ · ♻ · Slow services may then fail to start at boot
+- [ ] **svc.tm-monitoring** — Graphics/network telemetry monitors (GraphicsPerfSvc, Ndu, DPS) set Disabled · risk: med · src: OD(RT) · rec: ⛔ · 🔒 · ReviOS reverted: Ndu=2, GraphicsPerfSvc=3, DPS=2 (DPS needed for Data Usage page and Task Manager network)
+- [ ] **svc.bam** — Background Activity Moderator (bam) set Disabled · risk: med · src: RV(reverted) · rec: ⛔ · 🔒 · Disabling breaks Efficiency Mode; ReviOS reverted to 1
+- [ ] **svc.beep** — Beep driver set Disabled · risk: low · src: RV(reverted) · rec: ⛔ · 🔒 · ReviOS reverted to 1
+- [ ] **svc.od-bulk-profile** — OD ~190-service start-type baseline table (mostly Manual, Disabled list above) · risk: high · src: OD · rec: ⛔ · 🔒 · Resets WerSvc/PcaSvc/DiagTrack-adjacent services to Manual, conflicts with svc.reviOS-service-set; table in mech file
+- [ ] **svc.msi-safeboot** — Allow Windows Installer (MSIServer) to run in Safe Mode · risk: low · src: RV · rec: ✅ · SafeBoot Minimal/Network keys
+
+## Scheduled Tasks
+
+- [ ] **task.application-experience** — Disable Application Experience tasks (AitAgent, Compatibility Appraiser, ProgramDataUpdater, MareBackup, StartupAppTask, PcaPatchDbTask) · risk: low · src: RV,WH,OD · rec: ✅ · RV only does AitAgent+Appraiser; others from WH/OD
+- [ ] **task.ceip** — Disable Customer Experience Improvement Program tasks (Consolidator, UsbCeip, KernelCeipTask) · risk: low · src: RV,WH,OD · rec: ✅
+- [ ] **task.wer-queue** — Disable Windows Error Reporting QueueReporting task · risk: low · src: RV,WH,OD · rec: ✅ · pairs with svc.wersvc
+- [ ] **task.disk-diagnostic** — Disable DiskDiagnostic data collector (and OD's Resolver) tasks · risk: low · src: RV,WH,OD · rec: ✅
+- [ ] **task.diagnosis-scheduled** — Disable \Diagnosis\Scheduled task (scheduled maintenance diagnostics) · risk: low · src: OD · rec: ➕
+- [ ] **task.power-efficiency** — Disable Power Efficiency Diagnostics AnalyzeSystem task · risk: low · src: RV,WH · rec: ✅
+- [ ] **task.memory-diagnostic** — Disable MemoryDiagnostic ProcessMemoryDiagnosticEvents and RunFullMemoryDiagnostic tasks · risk: low · src: RV · rec: ✅
+- [ ] **task.feedback-siuf** — Disable Feedback\Siuf DmClient and DmClientOnScenarioDownload tasks · risk: low · src: WH,OD · rec: ✅
+- [ ] **task.sqm** — Disable PI\Sqm-Tasks (software quality metrics) task · risk: low · src: WH · rec: ✅
+- [ ] **task.office** — Disable all scheduled tasks under \Microsoft\Office\ (telemetry, Office Actions Server AI) · risk: low · src: RV,WH · rec: ✅ · WH names only Office Actions Server
+- [ ] **task.update-orchestrator** — Disable UpdateOrchestrator tasks (StartOobeAppsScanAfterUpdate, Start Oobe Expedite Work, Schedule Scan) · risk: med · src: RV · rec: ⚠️ · 🔁 · Schedule Scan off = no automatic update scans; conflicts with upd.* policy choices
+- [ ] **task.wu-scheduled-start** — Disable WindowsUpdate\Scheduled Start task · risk: med · src: RV · rec: ⚠️ · 🔁 · Part of ReviOS update blocking; review with upd group
+- [ ] **task.ucpd-velocity** — Disable AppxDeploymentClient\UCPD velocity task · risk: low · src: RV · rec: ✅ · 🔁 · Pair with svc.ucpd, else task re-enables driver
+- [ ] **task.autochk-proxy** — Disable Autochk\Proxy (SQM disk-check data) task · risk: low · src: WH,OD · rec: ➕ · Source notes keeping it for disk health data
+- [ ] **task.maps-update** — Disable Maps\MapsUpdateTask · risk: low · src: WH,OD · rec: ➕
+- [ ] **task.family-safety** — Disable Shell\FamilySafetyMonitor task · risk: low · src: WH · rec: ➕
+- [ ] **task.windows-ai-recall** — Disable WindowsAI RecallConfiguration and RecallPipeline tasks · risk: low · src: WH · rec: ✅ · Redundant if Copilot+Recall removal (ai group) already applied
+- [ ] **task.etw-diagnostic-channels** — Turn off SleepStudy, Kernel-Processor-Power and UserModePowerService diagnostic ETW channels · risk: low · src: RV · rec: ✅ · wevtutil, not a task
+- [ ] **task.ngen-run-once** — Run .NET Framework NGEN tasks once to flush the queue (not disabled) · risk: low · src: RV · rec: ➕
+- [ ] **task.reg-idle-backup** — Re-enable automatic registry backup (EnablePeriodicBackup=1) and create daily AutoRegBackup task · risk: low · src: WU · rec: ➕ · Adds a task rather than removing one
+
+## Performance
+
+- [ ] **perf.win32-priority-separation** — Win32PrioritySeparation=38 (short variable quantum, 3x foreground boost) · risk: low · src: RV,OD,WH · rec: ✅ · 38 is WH's "Programs" option; 24 = background services
+- [ ] **perf.mmcss-tuning** — MMCSS multimedia scheduler: SystemResponsiveness=10, Games task Priority/Scheduling/GPU Priority, NoLazyMode/AlwaysOn · risk: low · src: OD,WH,RV · rec: ➕ · RV only sets NetworkThrottlingIndex=10 (default); OD sets 0xFFFFFFFF
+- [ ] **perf.network-throttling-index** — NetworkThrottlingIndex: RV 10 (default), OD 0xFFFFFFFF (off) · risk: low · src: RV,OD · rec: ➕ · Conflicts: pick one value; also in mmcss item
+- [ ] **perf.memory-compression-off** — Disable-MMAgent -mc · risk: med · src: RV,RT · rec: ➕ · Saves CPU, costs RAM on low-memory machines
+- [ ] **perf.ntfs-last-access-off** — NTFS last-access timestamp updates disabled (fsutil disableLastAccess 1) · risk: low · src: RV,RT · rec: ✅
+- [ ] **perf.ntfs-8dot3-off** — NTFS 8.3 short name creation disabled (fsutil disable8dot3 1) · risk: low · src: RV,RT · rec: ➕ · Can break very old installers
+- [ ] **perf.ntfs-memory-usage** — NTFS memory usage high (fsutil memoryusage 2) · risk: low · src: RT · rec: ➕
+- [ ] **perf.superfetch-keep** — Keep SysMain/Superfetch enabled (revitool superfetch enable) · risk: low · src: RV · rec: ✅ · Not a change from default; documents the ReviOS revert (defrag -b needs it)
+- [ ] **perf.prefetch** — EnablePrefetcher=0 (Prefetch off) · risk: low · src: WH,OD · rec: ⛔ · Conflicts perf.superfetch-keep; mainly HDD benefit otherwise
+- [ ] **perf.ifeo-perfoptions** — IFEO PerfOptions priorities: SearchIndexer, ctfmon BelowNormal; fontdrvhost, lsass, sihost Idle · risk: med · src: RV · rec: ⚠️ · lsass/sihost at Idle can hurt responsiveness; ReviOS applies it always
+- [ ] **perf.shutdown-timeouts** — Fast shutdown: AutoEndTasks=1, HungAppTimeout/WaitToKillAppTimeout=2000, LowLevelHooksTimeout=1000, WaitToKillServiceTimeout=1500 · risk: med · src: RV · rec: ✅ · 👤 · Can truncate saves at shutdown
+- [ ] **perf.menu-responsiveness** — MenuShowDelay=0, ActiveWndTrkTimeout=10 · risk: low · src: RV,OD,WH · rec: ✅ · 👤 · MouseHoverTime reverted to 400 by ReviOS (1 ms overlaps tooltips)
+- [ ] **perf.mouse-hover-time** — MouseHoverTime lowered (WH 1 ms) · risk: low · src: WH · rec: ⛔ · 👤 · ReviOS reverted to 400: overlapping tooltips
+- [ ] **perf.keyboard-latency** — KeyboardDelay=0, KeyboardSpeed=31 · risk: low · src: OD,WU · rec: ➕ · 👤
+- [ ] **perf.disable-accessibility-hotkeys** — Disable Sticky/Filter/Toggle Keys hotkey popups · risk: med · src: OD · rec: ➕ · 👤 · Breaks accessibility shortcuts for those who need them
+- [ ] **perf.startup-delay** — Remove startup app delay (Serialize StartupDelayInMSec=0) · risk: low · src: OD,WH · rec: ➕ · 👤
+- [ ] **perf.visual-effects** — Visual effects best performance: UserPreferencesMask, MinAnimate, TaskbarAnimations, ListviewAlphaSelect/Shadow, DragFullWindows, AeroPeek · risk: low · src: WU,WH · rec: ➕ · 👤 · Overlaps look.* items; WH exposes 20 individual toggles
+- [ ] **perf.background-apps-off** — Background apps off (GlobalUserDisabled, LetAppsRunInBackground=2) · risk: med · src: OD,RT,WH · rec: ⛔ · 👤 · ReviOS reverted: broke Xbox Game Bar Known Game List update
+- [ ] **perf.explorer-folder-discovery-off** — Disable automatic folder type discovery (FolderType=NotSpecified) · risk: low · src: RV,WU · rec: ✅ · 👤 · Needs sign-out; resets view bags
+- [ ] **perf.explorer-downloads-no-groupby** — Remove GroupBy in Downloads folder type · risk: low · src: RV · rec: ➕ · 🔒 👤
+- [ ] **perf.explorer-high-perf-gpu** — Explorer uses high-performance GPU (UserGpuPreferences GpuPreference=2) · risk: low · src: RV · rec: ➕ · 👤 · Laptops with hybrid graphics: battery cost
+- [ ] **perf.search-indexing-power** — Search indexing respects power modes; no indexing on battery · risk: low · src: RV · rec: ✅
+- [ ] **perf.disable-low-disk-checks** — NoLowDiskSpaceChecks=1 · risk: low · src: RV · rec: ➕ · 👤
+- [ ] **perf.no-track-shortcuts** — LinkResolveIgnoreLinkInfo=1 and NoResolveSearch=1 (stop shell shortcut tracking) · risk: low · src: RV · rec: ✅ · 👤
+- [ ] **perf.disable-autochk** — Disable boot-time autochk (BootExecute autocheck autochk /k:C*) · risk: med · src: RV · rec: ➕ · No automatic chkdsk after unclean shutdown
+- [ ] **perf.disable-wpbt** — DisableWpbtExecution=1 (stop OEM firmware injecting binaries at boot) · risk: low · src: RV · rec: ✅
+- [ ] **perf.auto-maintenance-off** — Automatic Maintenance disabled (MaintenanceDisabled=1, ScheduledDiagnostics EnabledExecution=0) · risk: med · src: RV · rec: ➕ · ReviOS option, default OFF; user did not choose it
+- [ ] **perf.restore-point-config** — Remove System Restore pre-defined config (SPP clients, RPSessionInterval=0, DiskPercent=0) · risk: med · src: RV · rec: ⚠️ · Does not disable System Restore; WH separately toggles Enable-ComputerRestore
+- [ ] **perf.reserved-storage-off** — Reserved Storage disabled (ShippedWithReserves=0, Set-WindowsReservedStorageState) · risk: low · src: RV · rec: ➕ · 🔁 · Frees ~7 GB; Windows Update may re-enable
+- [ ] **perf.storage-sense-off** — Storage Sense disabled (policy AllowStorageSenseGlobal=0 / StoragePolicy 01=0) · risk: low · src: WU,WH · rec: ➕ · 👤
+- [ ] **perf.long-paths** — Enable Win32 long paths (LongPathsEnabled=1) · risk: low · src: WU · rec: ➕
+- [ ] **perf.ngen-powershell** — Precompile PowerShell assemblies with ngen · risk: low · src: RV · rec: ➕ · One-shot
+- [ ] **perf.disk-cleanup-oneshot** — One-shot cleanmgr plus log, SoftwareDistribution and temp purge · risk: med · src: RV,WU · rec: ➕ · Wipes SoftwareDistribution and event logs; WU only clears temp
+- [ ] **perf.boot-menu-timeout-0** — bcdedit bootmgr timeout 0 for single-OS systems · risk: low · src: WU · rec: ➕ · Breaks dual-boot menu access
+- [ ] **perf.intel-tsx** — Intel TSX enabled (DisableTsx=0) · risk: med · src: RV,RT · rec: ➕ · Security trade-off; only on CPUs that have it
+- [ ] **perf.svchost-split-ref** — Service host grouping — see svc.svchost-split · risk: med · src: RV,WU,WH,OD · rec: ⛔ · redundant with svc.svchost-split; listed only for cross-reference
+- [ ] **perf.power-throttling-off** — Power Throttling disabled (PowerThrottlingOff=1) · risk: low · src: OD,WH · rec: ➕ · ♻ · Same as pwr.power-throttling-off; breaks Efficiency Mode behaviour of throttling
+- [ ] **perf.hags** — Hardware-accelerated GPU scheduling (HwSchMode=2 on / 1 off) · risk: med · src: OD,WH · rec: ⛔ · ReviOS commented out: user had acceleration issues; default is driver-dependent
+- [ ] **perf.mpo-off** — Multiplane Overlay off (OverlayTestMode=5) plus optional DisableOverlays=1, OverlayMinFPS=0 · risk: med · src: WU,WH,OD(RT) · rec: ➕ · ♻ · Only for flicker/black-screen fixes; DisableOverlays breaks Steam/Discord overlays
+- [ ] **perf.directx-windowed-flip** — Optimizations for windowed games / swap-effect upgrade (DirectXUserGlobalSettings) · risk: low · src: WH,RT · rec: ➕ · 👤 · Also covers VRR and Auto HDR tokens in same string
+- [ ] **perf.gpu-nvidia** — NVIDIA driver tweaks: DisableDynamicPstate=1, DisableASyncPstates=1 · risk: med · src: OD · rec: ➕ · 🔒 ♻ · Optional; keeps GPU at high clocks, more heat/power
+- [ ] **perf.gpu-amd** — AMD driver tweaks: EnableULPS=0, power/clock gating off, ASPM off · risk: med · src: OD · rec: ➕ · 🔒 ♻ · Optional; raises idle power
+- [ ] **perf.gpu-intel** — Intel driver tweaks: Display1_DisableAsyncFlips=1, AdaptiveVsyncEnable=0 · risk: low · src: OD · rec: ➕ · 🔒 ♻
+- [ ] **perf.search-webview2** — Disable WebView2 in Windows Search (FeatureManagement override 1694661260) · risk: low · src: WH · rec: ➕ · 🔁 · Undocumented feature ID; also in privacy/start groups
+- [ ] **perf.alt-tab-filter** — Alt+Tab shows windows only, no Edge tabs (MultiTaskingAltTabFilter=3) · risk: low · src: WH · rec: ➕ · 👤 · WH default is already 3
+- [ ] **perf.webdav-limit** — Lift WebDAV file size limit (FileSizeLimitInBytes=0xFFFFFFFF) · risk: low · src: OD · rec: ➕
+- [ ] **perf.wallpaper-quality** — JPEGImportQuality=100 (no wallpaper recompression) · risk: low · src: WH · rec: ➕ · 👤 · WH label says compression enabled but recommended value 100
+- [ ] **perf.copy-dialog-details** — Show more details in copy dialog (EnthusiastMode=1) · risk: low · src: RV · rec: ✅ · 👤
+- [ ] **perf.search-whole-filesystem** — Search entire file system instead of indexed locations (WholeFileSystem=1) · risk: low · src: WH · rec: ⛔ · 👤 · Slower; conflicts with indexing setups
+
+## Gaming
+
+- [ ] **game.gamedvr-off** — Game DVR/background capture off (GameDVR_Enabled=0, AppCaptureEnabled=0, AllowGameDVR=0) · risk: low · src: RV,WU,WH,OD · rec: ✅ · 👤 · ReviOS: AppCaptureEnabled=0 only if Xbox removed (else Start Recording greyed, #74)
+- [ ] **game.gamebar-off** — Xbox Game Bar off (GameBarEnabled=0, ShowStartupPanel=0, UseNexusForGameBarEnabled=0) · risk: low · src: OD,WH · rec: ➕ · 👤 · Breaks Win+G overlay and controller Xbox-button launch
+- [ ] **game.game-mode** — Game Mode on (AllowAutoGameMode=1, AutoGameModeEnabled=1) · risk: low · src: WU,WH,OD · rec: ✅ · 👤 · Windows default is on
+- [ ] **game.fullscreen-optimizations-off** — Disable fullscreen optimizations (GameDVR_FSEBehaviorMode=2 and companion keys) · risk: low · src: RV,WH,OD(RT) · rec: ➕ · 👤 · RV sets FSEBehaviorMode=0 with GameDVR off; WH/OD set 2. Conflicts with perf.directx-windowed-flip
+- [ ] **game.mouse-accel-off** — Mouse acceleration off (MouseSpeed/Threshold1/Threshold2=0) · risk: low · src: RV,WU,WH,OD · rec: ✅ · 👤
+- [ ] **game.raw-mouse-throttle** — Background window message rate limit (RawMouseThrottleEnabled=1, Duration 3..20 ms) · risk: low · src: RT · rec: ➕ · 👤
+- [ ] **game.vbs-hvci-off** — Disable VBS / Memory Integrity (HVCI) for gaming performance · risk: high · src: RV,OD · rec: ⚠️ · 🔒 ♻ · same as sec.vbs-hvci-off. Security trade-off; ReviOS applies it always
+- [ ] **game.gaming-copilot-block** — Block Gaming Copilot companion host (GamingCompanionHostOptions ActivationType) · risk: low · src: RV · rec: ✅ · 🔒 · Also relevant to AI group
+- [ ] **game.gpu-priority-games** — Games MMCSS task: GPU Priority=8, Priority=6, Scheduling Category=High · risk: med · src: WH,OD · rec: ➕ · Same key set as perf.mmcss-tuning; OD sets Priority=2
+- [ ] **game.auto-hdr-vrr** — Auto HDR and Variable Refresh Rate tokens (DirectXUserGlobalSettings) · risk: low · src: WH · rec: ➕ · 👤 · Requires HDR/VRR display
+- [ ] **game.auto-color-management** — Automatically manage color for apps (AutoColorManagementEnabled) · risk: low · src: WH · rec: ➕ · ♻
+- [ ] **game.desktop-composition-off** — Disable DWM composition (CompositionPolicy=0) · risk: med · src: WH · rec: ⛔ · 👤 · Breaks Aero/transparency; Win11 may ignore
+- [ ] **game.nvidia-extras** — NVIDIA legacy sharpening (EnableGR535) and DLSS indicator off (ShowDlssIndicator=0) · risk: low · src: WH,OD · rec: ➕ · 🔒
+- [ ] **game.known-game-list-refresh** — Refresh Xbox Known Game List (KGLRevision, KGL OneSettings) so Game Mode/DVR recognise games · risk: low · src: RT · rec: ➕ · 👤 · Network call to settings.data.microsoft.com
+- [ ] **game.per-game-mitigations** — Per-game IFEO mitigation fixes (Valorant vgc.exe CFG, osu! ASLR) · risk: low · src: RV · rec: ➕ · 🔒 · Fixes specific games; remove if not used
+- [ ] **game.boot-timer-defaults** — bcdedit: delete useplatformclock and disabledynamictick (leave timer defaults) · risk: low · src: RV · rec: ✅ · ♻ · ReviOS does not set useplatformtick/disabledynamictick yes: breaks ROG Ally sleep (#167)
+- [ ] **game.teredo-off** — Teredo tunnelling off (gaming latency) · risk: low · src: WU · rec: ➕ · Defined in net group; see net.*
+- [ ] **game.vulnerable-driver-blocklist** — Keep Vulnerable Driver Blocklist enabled (value 1) · risk: low · src: RV · rec: ✅ · ReviOS: setting 0 breaks THE FINALS; process mitigations and Spectre/Meltdown overrides also left default
+
+## Power
+
+- [x] **pwr.hibernate-off** — Disable hibernation and Fast Startup (powercfg -h off, HibernateEnabled=0, HiberbootEnabled=0, ShowHibernateOption=0) · risk: med · src: RV,RT,WU,WH,OD · rec: ✅ · ReviOS default; laptop sleep may overheat. Radio vs enable-hibernate.
+- [ ] **pwr.fast-startup-off-only** — Disable Fast Startup only (HiberbootEnabled=0, keep hibernate) · risk: low · src: RT,WH,OD · rec: ⛔ · Redundant with pwr.hibernate-off; use only if you want hibernation kept
+- [ ] **pwr.high-performance-plan** — Revision "Ultra Performance" power plan (Ultimate Performance duplicate, tuned) · risk: med · src: RV,RT,WU · rec: ➕ · 🔒 · Not for laptops; WU uses stock Ultimate Performance GUID. OD's embedded .pow is not captured
+- [ ] **pwr.plan-c6-disable** — Revi plan: deep idle C6 disabled (idle promote/demote 100/80) · risk: low · src: RT · rec: ➕ · 🔒 · Only applies to the Revision plan
+- [ ] **pwr.display-sleep-timeouts** — Display, disk and sleep timeouts (display/disk/sleep idle = never on AC, wake timers off) · risk: low · src: WH · rec: ➕ · WH recommended: AC 0, DC 300/600/900 s
+- [ ] **pwr.usb-selective-suspend** — USB selective suspend, hub timeout and USB3 link power management off (+ per-device MSPower flag) · risk: low · src: WH,OD,RV · rec: ➕ · ReviOS plan also disables USB3 LPM; OD adds AttemptRecoveryFromUsbPowerDrain=0
+- [ ] **pwr.pcie-aspm-off** — PCIe Link State Power Management off on AC (ASPM=0) · risk: low · src: WH · rec: ➕ · More idle power, fewer GPU/NVMe latency spikes
+- [ ] **pwr.processor-states** — CPU min/max state, boost mode, core parking, EPP, increase/decrease policy and thresholds · risk: low · src: WH,RT · rec: ➕ · Settings listed in mech; ReviOS plan sets core parking 100, PERFINCPOL=2, PERFDECPOL=1
+- [ ] **pwr.power-throttling-off** — Power Throttling disabled (PowerThrottlingOff=1) · risk: low · src: OD,WH · rec: ➕ · ♻ · Same as perf.power-throttling-off; apply once
+- [ ] **pwr.sleep-states** — Sleep state behaviour: Modern Standby (S0) off via PlatformAoAcOverride=0 / S3 · risk: high · src: WU,RT · rec: ⚠️ · ♻ · Needs hardware S3 support; also WU "S0 network connectivity" toggle
+- [ ] **pwr.hybrid-sleep-hibernate-timeouts** — Hybrid sleep off, hibernate-after timeout 0 · risk: low · src: WH · rec: ➕ · Moot when pwr.hibernate-off applied
+- [ ] **pwr.button-lid-actions** — Power button, sleep button and lid close actions (unhidden power options) · risk: low · src: WH · rec: ➕ · Laptop-oriented
+- [ ] **pwr.start-power-menu** — Start power menu: show Sleep (ShowSleepOption=1), Lock, Hibernate · risk: low · src: RV,WH · rec: ✅ · ReviOS shows Sleep
+- [ ] **pwr.shutdown-without-logon** — Allow shutdown from logon screen (ShutdownWithoutLogon=1) · risk: low · src: RV · rec: ✅
+- [ ] **pwr.logon-polish** — Disable first sign-in animation and startup sound (EnableFirstLogonAnimation=0, DisableStartupSound=1) · risk: low · src: RV · rec: ✅
+- [ ] **pwr.crash-control** — Auto-reboot after BSOD off, small memory dump (AutoReboot=0, CrashDumpEnabled=3) · risk: low · src: RV · rec: ✅
+- [ ] **pwr.gpu-power-plan-settings** — Intel graphics, AMD slider overlay, ATI PowerPlay, switchable-graphics preference power settings · risk: low · src: WH · rec: ➕ · Hardware-specific; laptops only
+- [ ] **pwr.multimedia-battery** — Multimedia power: sharing media, video playback quality bias, when playing video, JS timer, slideshow, wireless power mode · risk: low · src: WH · rec: ➕
+- [ ] **pwr.battery-levels** — Low/critical/reserve battery levels, notifications and actions · risk: low · src: WH · rec: ➕ · Laptops only
+- [ ] **pwr.battery-percentage-tray** — Show battery percentage in tray · risk: low · src: OD · rec: ➕ · 👤
+- [ ] **pwr.hello-logon-fix** — Delete DisableAutomaticRestartSignOn (fixes slow Windows Hello logon) · risk: low · src: RV · rec: ✅ · Revert-style fix; ReviOS always applies
